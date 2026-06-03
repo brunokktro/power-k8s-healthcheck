@@ -4,6 +4,8 @@ A [Kiro Power](https://kiro.dev/docs/powers/) that turns Kiro into a Kubernetes 
 
 > Think of it as a pre-flight checklist for your cluster: run it before an upgrade, after an RBAC change, or on a monthly cadence to catch drift before it becomes an incident.
 
+> Part of a broader collection of Kiro Skills, Powers and Steering at [brunokktro/KIRO](https://github.com/brunokktro/KIRO).
+
 ---
 
 ## What it does
@@ -28,6 +30,12 @@ The guidance is grounded in official sources:
 - [Kubernetes Setup Best Practices](https://kubernetes.io/docs/setup/best-practices/)
 - [Amazon EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
 - [AWS Well-Architected Container Build Lens](https://docs.aws.amazon.com/wellarchitected/latest/container-build-lens/container-build-lens.html)
+
+### Example report
+
+The health check produces an interactive HTML report with a health score, a findings donut chart, clickable pillar cards, severity-filtered tables, and a prioritized action list.
+
+![k8s-healthcheck report preview](assets/k8s-healthcheck-preview.png)
 
 ---
 
@@ -155,6 +163,7 @@ power-k8s-healthcheck/
 |- mcp.json                       # MCP server configuration (kubernetes + EKS)
 |- LICENSE                        # MIT
 |- README.md                      # This file
+|- assets/                        # Images used by the README
 `- steering/                      # One file per pillar, loaded on demand
    |- security-checks.md
    |- reliability-checks.md
