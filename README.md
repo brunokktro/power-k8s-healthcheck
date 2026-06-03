@@ -1,4 +1,4 @@
-# Kubernetes Health Check — Kiro Power
+# Kubernetes Health Check - Kiro Power
 
 A [Kiro Power](https://kiro.dev/docs/powers/) that turns Kiro into a Kubernetes and Amazon EKS reviewer. It inspects live cluster state through MCP tools and produces an actionable, severity-ranked report across eight best-practice pillars.
 
@@ -33,24 +33,18 @@ The guidance is grounded in official sources:
 
 ## How it works
 
-```text
-                +-----------------------------+
-                |            Kiro              |
-                |  (loads POWER.md + steering) |
-                +--------------+--------------+
-                               |
-            +------------------+-------------------+
-            |                                      |
-   +--------v---------+                 +----------v----------+
-   |   kubernetes     |                 | awslabs.eks-mcp-    |
-   |   MCP server     |                 | server (EKS)        |
-   |  (kubectl/Helm)  |                 |  (Insights, CW,     |
-   |                  |                 |   VPC, IAM)         |
-   +--------+---------+                 +----------+----------+
-            |                                      |
-   +--------v---------+                 +----------v----------+
-   |  Any K8s cluster |                 |   Amazon EKS        |
-   +------------------+                 +---------------------+
+```mermaid
+flowchart TD
+    Kiro["Kiro<br/>(loads POWER.md + steering)"]
+    K8S["kubernetes MCP server<br/>(kubectl / Helm)"]
+    EKS["awslabs.eks-mcp-server<br/>(EKS Insights, CloudWatch,<br/>VPC, IAM)"]
+    AnyCluster["Any Kubernetes cluster<br/>(EKS, GKE, AKS, kind, minikube)"]
+    EKSCluster["Amazon EKS"]
+
+    Kiro --> K8S
+    Kiro --> EKS
+    K8S --> AnyCluster
+    EKS --> EKSCluster
 ```
 
 - The **`kubernetes`** server runs every generic Kubernetes check (works on any cluster: EKS, GKE, AKS, kind, minikube).
