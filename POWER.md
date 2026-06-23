@@ -19,34 +19,13 @@ This Power enables comprehensive health checks and best practices validation for
 **Based on:**
 - [Kubernetes Configuration Good Practices](https://kubernetes.io/blog/2025/11/25/configuration-good-practices/)
 - [Kubernetes Setup Best Practices](https://kubernetes.io/docs/setup/best-practices/)
+- [Kubernetes Release Notes (CHANGELOG)](https://kubernetes.io/releases/notes/)
 - [AWS Well-Architected Container Build Lens](https://docs.aws.amazon.com/wellarchitected/latest/container-build-lens/container-build-lens.html)
 - [Amazon EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
-
----
-
-## Onboarding
-
-When this Power is first used, validate the required tooling before running any checks.
-
-### Step 1: Validate prerequisites
-
-- **kubectl** (required for the `kubernetes` MCP server)
-  - Verify with: `kubectl version --client`
-  - A reachable cluster context must be configured: `kubectl config current-context`
-- **Helm v3** (required for Helm-related checks)
-  - Verify with: `helm version`
-- **AWS CLI + credentials** (required only for EKS-specific checks)
-  - Verify with: `aws sts get-caller-identity`
-- **uv / uvx** (runtime for `awslabs.eks-mcp-server`)
-  - Verify with: `uvx --version`
-
-**CRITICAL:** If `kubectl` cannot reach a cluster, do NOT proceed. Ask the user to fix their kubeconfig context first. EKS-specific checks are skipped automatically when AWS credentials are not available.
-
-### Step 2: Confirm read-only posture
-
-This Power is designed for **read-only assessment**. The bundled MCP servers run without write/mutation flags by default:
-- `awslabs.eks-mcp-server` runs in read-only mode (no `--allow-write`).
-- `mcp-server-kubernetes` can be hardened further with `ALLOW_ONLY_NON_DESTRUCTIVE_TOOLS=true` (see README).
+- [Amazon EKS Kubernetes versions](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [EKS Standard Support](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)
+- [EKS Extended Support](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-extended.html)
+- [EKS Kubernetes release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-release-calendar.html)
 
 ---
 
@@ -100,6 +79,56 @@ AWS EKS-specific operations and insights.
 
 ## Health Check Workflow
 
+### Step 0 — Documentation Freshness Check (HARD GATE)
+
+Run BEFORE any cluster validation. This step is mandatory and non-skippable - it ensures the
+checks are aligned with the latest authoritative guidance, not the snapshot baked into the
+Power at write time.
+
+For each URL in the "Based on:" section above:
+
+1. Fetch the page (via `fetch` MCP).
+2. Extract the `Last-Modified` HTTP header OR the visible "Last updated" / publication date in the document.
+3. Compare against the date this Power was last updated (frontmatter or git log of `POWER.md`).
+4. If ANY source is newer than the Power's last update → REPORT to the user before proceeding:
+   - Which source(s) changed
+   - What changed (summarize the delta if visible)
+   - Recommendation to refresh the Power before relying on the findings
+5. Record the freshness-check timestamp in the report header (audit trail).
+
+**Doc set to check (cross-references all pillars):**
+
+| Pillar | Authoritative source(s) |
+|--------|------------------------|
+| Security | EKS Best Practices Guide; Kubernetes Configuration Good Practices |
+| Reliability | EKS Best Practices Guide; Kubernetes Configuration Good Practices |
+| Networking | EKS Best Practices Guide |
+| Cost | EKS Best Practices Guide; EKS Standard/Extended Support pricing pages |
+| Upgrades | EKS Kubernetes versions; EKS release calendar; K8s CHANGELOG (target version) |
+| Configuration | Kubernetes Configuration Good Practices |
+| Image Build | AWS Well-Architected Container Build Lens |
+| Scalability | Kubernetes Setup Best Practices; EKS Best Practices Guide |
+
+**Output of Step 0 (always shown in report header):**
+
+```
+## Documentation Freshness Check
+
+Performed at: <ISO timestamp>
+Power version baseline: <date>
+
+| Source | Last updated | Status |
+|--------|-------------|--------|
+| EKS Kubernetes versions | 2026-MM-DD | aligned |
+| K8s CHANGELOG (target) | 2026-MM-DD | NEWER - review |
+| ... | | |
+```
+
+If everything is aligned → proceed to Step 1.
+If anything changed → ask user: "Proceed with current Power baseline, or pause to refresh?"
+
+---
+
 ### Step 1: Determine Cluster Type
 
 Ask the user:
@@ -115,7 +144,7 @@ For each active pillar, load the corresponding steering file and execute the che
 
 Produce a structured report with:
 
-```text
+```
 ## Summary
 - Total checks: N
 - CRITICAL: X | HIGH: Y | MEDIUM: Z | LOW: W | PASS: P
@@ -155,27 +184,27 @@ End with a prioritized action list:
 ## Quick Start Examples
 
 ### Full Health Check (EKS)
-```text
+```
 "Run a full health check on my EKS cluster 'production' in us-east-1"
 ```
 
 ### Security-Only Check
-```text
+```
 "Check security best practices on my current Kubernetes context"
 ```
 
 ### Upgrade Readiness
-```text
+```
 "Is my EKS cluster 'staging' ready to upgrade from 1.29 to 1.30?"
 ```
 
 ### Cost Optimization Scan
-```text
+```
 "Find idle resources and right-sizing opportunities in namespace 'production'"
 ```
 
 ### Configuration Hygiene
-```text
+```
 "Validate YAML and labeling best practices across all namespaces"
 ```
 
@@ -232,21 +261,3 @@ list_api_resources (cross-reference with workload apiVersion fields)
 - Some scalability thresholds are approximate and depend on instance types and workload patterns
 - Network policy checks verify existence, not correctness of rules
 - PKI certificate expiry checks require exec access to nodes or control plane logs
-
----
-
-## License and support
-
-This Power is licensed under the [MIT License](./LICENSE).
-
-It integrates with the following MCP servers, which are distributed under their own licenses:
-
-- **mcp-server-kubernetes** (MIT) - https://github.com/Flux159/mcp-server-kubernetes
-- **awslabs.eks-mcp-server** (Apache-2.0) - https://github.com/awslabs/mcp/tree/main/src/eks-mcp-server
-
-Privacy policies for the integrated components:
-
-- AWS Privacy Notice (covers `awslabs.eks-mcp-server`): https://aws.amazon.com/privacy/
-- mcp-server-kubernetes processes data locally via your `kubectl` context and does not transmit cluster data to third parties. See the project repository for details: https://github.com/Flux159/mcp-server-kubernetes
-
-**Support:** Open an issue at https://github.com/brunokktro/power-k8s-healthcheck/issues
